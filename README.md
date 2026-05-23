@@ -86,7 +86,7 @@ my_notifyme_123_bot
 创建成功后，BotFather 会给你一串 token，格式大概是：
 
 ```text
-1234567890:AAxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+<一长串由 BotFather 生成的 token>
 ```
 
 这就是你的：
@@ -120,7 +120,7 @@ https://api.telegram.org/bot<你的BOT_TOKEN>/getUpdates
 例如：
 
 ```text
-https://api.telegram.org/bot1234567890:AAxxxx/getUpdates
+https://api.telegram.org/bot你的BOT_TOKEN/getUpdates
 ```
 
 页面里会出现一段 JSON，找到类似下面的位置：
