@@ -2,36 +2,75 @@
 
 NotifyMe 是一个本地任务提醒工具。
 
-你可以让它帮你运行或监控电脑上的任务，例如：
+它可以帮你运行或监控电脑上的任务，并在任务完成、失败或满足条件时，通过 Telegram Bot 给你发提醒。
 
-- 跑 `python train.py`
-- 等 GPU 空闲
-- 等某个文件下载完成
-- 等日志里出现 `Done`
+适合这些场景：
+
+- 跑 `python train.py`、数据处理脚本、批处理任务
+- 等 AI 训练结束或 GPU 空闲
+- 等文件下载完成或文件大小稳定
+- 等日志里出现 `Done`、`Finished`、`Error` 等关键词
 - 等本地服务端口打开
-- 等网页接口返回正常
+- 等接口健康检查返回正常
 
-任务完成后，NotifyMe 会通过 Telegram Bot 给你发消息，还可以附带截图、耗时、退出码、最后输出、CPU/RAM/GPU 峰值等信息。
+提醒内容可以包含：
 
-项目地址：
+- 任务名称
+- 运行耗时
+- 退出码
+- 最后几行输出
+- CPU / RAM / GPU 峰值
+- 当前屏幕截图
+- 历史记录
 
-[https://github.com/A0NECRN/NotifyMe](https://github.com/A0NECRN/NotifyMe)
+## 目录
 
-## 1. 准备环境
+- [功能特点](#功能特点)
+- [安装依赖](#安装依赖)
+- [创建 Telegram Bot](#创建-telegram-bot)
+- [获取 Telegram Chat ID](#获取-telegram-chat-id)
+- [配置 NotifyMe](#配置-notifyme)
+- [启动 NotifyMe](#启动-notifyme)
+- [第一次使用：设置工作目录](#第一次使用设置工作目录)
+- [Telegram 使用方法](#telegram-使用方法)
+- [本地命令行用法](#本地命令行用法)
+- [运行数据和隐私保护](#运行数据和隐私保护)
+- [常见问题](#常见问题)
 
-需要：
+## 功能特点
 
-- Windows / macOS / Linux
-- Python 3.10 或更高版本
-- 一个 Telegram 账号
+NotifyMe 支持两种使用方式：
 
-安装依赖：
+1. Telegram 远程控制
+   适合离开电脑后远程查看状态、截图、历史记录。
+
+2. 本地命令行控制
+   适合输入较长命令，例如训练脚本、构建命令、数据处理命令。
+
+支持的监控类型：
+
+| 类型 | 用途 |
+| --- | --- |
+| 命令 | 运行命令并在结束后提醒 |
+| 进程 | 等某个进程结束 |
+| 日志 | 等日志文件出现关键词 |
+| 文件 | 等文件出现、消失或大小稳定 |
+| 端口 | 等端口打开或关闭 |
+| HTTP | 等网页或接口返回指定状态 |
+| CPU | 等 CPU 持续空闲 |
+| GPU | 等 GPU 持续空闲 |
+
+## 安装依赖
+
+建议使用 Python 3.10 或更高版本。
+
+进入项目目录后执行：
 
 ```powershell
 pip install -r requirements.txt
 ```
 
-如果你使用虚拟环境，可以这样：
+推荐使用虚拟环境：
 
 ```powershell
 python -m venv .venv
@@ -39,7 +78,7 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-macOS / Linux 激活虚拟环境：
+macOS / Linux：
 
 ```bash
 python -m venv .venv
@@ -47,21 +86,21 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## 2. 创建 Telegram Bot
+## 创建 Telegram Bot
 
-NotifyMe 通过 Telegram Bot 给你发消息，所以你需要先创建一个 bot。
+NotifyMe 需要通过 Telegram Bot 给你发送提醒。
 
-### 第 1 步：打开 BotFather
+### 1. 打开 BotFather
 
-在 Telegram 搜索：
+在 Telegram 里搜索：
 
 ```text
 @BotFather
 ```
 
-注意：认准 Telegram 官方的 BotFather。
+打开后点击 Start。
 
-### 第 2 步：创建新 Bot
+### 2. 创建新机器人
 
 给 BotFather 发送：
 
@@ -69,75 +108,75 @@ NotifyMe 通过 Telegram Bot 给你发消息，所以你需要先创建一个 bo
 /newbot
 ```
 
-它会让你输入两个东西：
+BotFather 会让你输入：
 
-1. Bot 显示名称，例如：
-
-```text
-My NotifyMe Bot
-```
-
-2. Bot 用户名，必须以 `bot` 结尾，例如：
+1. Bot 显示名称
+   例如：
 
 ```text
-my_notifyme_123_bot
+NotifyMe Bot
 ```
 
-创建成功后，BotFather 会给你一串 token，格式大概是：
+2. Bot 用户名
+   用户名必须以 `bot` 结尾，例如：
 
 ```text
-<一长串由 BotFather 生成的 token>
+my_notifyme_bot
 ```
 
-这就是你的：
+创建成功后，BotFather 会给你一个 Bot Token。
+
+它看起来是一长串字符，这就是后面要填入 `.env` 的：
 
 ```env
 TELEGRAM_TOKEN
 ```
 
-不要把这个 token 发给别人，也不要上传到 GitHub。
+请注意：
 
-## 3. 获取 Telegram Chat ID
+- 不要把 Bot Token 发给别人。
+- 不要把 Bot Token 写进 README。
+- 不要把包含 Bot Token 的 `.env` 上传到 GitHub。
 
-NotifyMe 还需要知道“消息发给谁”，这就是 `TELEGRAM_CHAT_ID`。
+## 获取 Telegram Chat ID
 
-### 第 1 步：先给你的 Bot 发一句话
-
-打开刚创建的 bot，点击 Start，或者发送：
-
-```text
-hello
-```
-
-### 第 2 步：在浏览器打开下面的网址
-
-把 `<你的BOT_TOKEN>` 换成 BotFather 给你的 token：
-
-```text
-https://api.telegram.org/bot<你的BOT_TOKEN>/getUpdates
-```
-
-例如：
-
-```text
-https://api.telegram.org/bot你的BOT_TOKEN/getUpdates
-```
-
-页面里会出现一段 JSON，找到类似下面的位置：
-
-```json
-"chat":{"id":123456789,...}
-```
-
-里面的数字就是：
+NotifyMe 还需要知道消息发给哪个 Telegram 聊天窗口，这个值叫：
 
 ```env
 TELEGRAM_CHAT_ID
 ```
 
-如果页面里没有内容，通常是因为你还没有先给 bot 发消息。回 Telegram 给 bot 发一句 `hello`，再刷新网页。
+### 1. 先给你的 Bot 发消息
 
-## 4. 配置 NotifyMe
+打开你刚创建的 Bot，点击 Start，或者发送：
+
+```text
+hello
+```
+
+### 2. 打开 getUpdates 地址
+
+在浏览器打开：
+
+```text
+https://api.telegram.org/bot<BOT_TOKEN>/getUpdates
+```
+
+把 `<BOT_TOKEN>` 换成你的 Bot Token。
+
+页面会显示一段 JSON。找到类似下面的位置：
+
+```json
+"chat": {
+  "id": 123456789
+}
+```
+
+这里的数字就是你的 `TELEGRAM_CHAT_ID`。
+
+如果页面没有内容，通常是因为你还没有给 Bot 发过消息。先回 Telegram 给 Bot 发一句 `hello`，再刷新页面。
+
+## 配置 NotifyMe
 
 复制配置模板：
 
@@ -154,8 +193,8 @@ cp .env.example .env
 然后编辑 `.env`：
 
 ```env
-TELEGRAM_TOKEN=你的bot token
-TELEGRAM_CHAT_ID=你的chat id
+TELEGRAM_TOKEN=你的 Bot Token
+TELEGRAM_CHAT_ID=你的 Chat ID
 
 SCREENSHOT_QUALITY=75
 SCREENSHOT_MAX_WIDTH=1920
@@ -170,17 +209,25 @@ VERIFY_SSL=true
 UPDATES_TIMEOUT=30
 ```
 
-重要提醒：
+字段说明：
 
-- `.env` 是你的私人配置文件。
-- 不要上传 `.env` 到 GitHub。
-- 仓库里只保留 `.env.example`。
+| 字段 | 说明 |
+| --- | --- |
+| `TELEGRAM_TOKEN` | BotFather 给你的 Bot Token |
+| `TELEGRAM_CHAT_ID` | 你的 Telegram Chat ID |
+| `SCREENSHOT_QUALITY` | 截图 JPEG 质量 |
+| `SCREENSHOT_MAX_WIDTH` | 截图最大宽度 |
+| `CHECK_INTERVAL` | 监控轮询间隔，单位秒 |
+| `CPU_THRESHOLD` | CPU 空闲判断阈值 |
+| `CPU_IDLE_DURATION` | CPU 持续空闲多久后提醒 |
+| `GPU_THRESHOLD` | GPU 空闲判断阈值 |
+| `GPU_IDLE_DURATION` | GPU 持续空闲多久后提醒 |
+| `VERIFY_SSL` | 是否校验 HTTPS 证书 |
+| `UPDATES_TIMEOUT` | Telegram 长轮询超时时间 |
 
-本项目已经在 `.gitignore` 里忽略了 `.env`、日志、数据库和缓存文件。
+## 启动 NotifyMe
 
-## 5. 启动 NotifyMe
-
-在项目目录运行：
+运行：
 
 ```powershell
 python task_monitor.py
@@ -192,45 +239,43 @@ python task_monitor.py
 python -m notifyme
 ```
 
-启动成功后，你的 Telegram Bot 会收到启动消息，并出现按钮菜单。
+启动成功后，Telegram Bot 会给你发送启动消息，并显示快捷按钮菜单。
 
-## 6. 第一次使用：先设置工作目录
+## 第一次使用：设置工作目录
 
 这是最重要的一步。
 
-NotifyMe 安装在自己的目录里，但你的任务通常在别的项目目录里。
+NotifyMe 本身在一个目录里，但你的脚本通常在另一个项目目录里。
 
-例如你的训练项目在：
+例如你的项目在：
 
 ```text
 E:\projects\my-train
 ```
 
-你应该先在 Telegram 里发送：
+请先在 Telegram 里发送：
 
 ```text
 工作目录 E:\projects\my-train
 ```
 
-以后你再发送：
+之后你发送：
 
 ```text
 运行 python train.py
 ```
 
-它就会在 `E:\projects\my-train` 里运行，而不是在 NotifyMe 目录里运行。
+NotifyMe 就会在 `E:\projects\my-train` 里运行这个命令，而不是在 NotifyMe 自己的目录里运行。
 
-如果你只想临时指定一次目录，也可以发送：
+如果只想临时指定一次目录，可以发送：
 
 ```text
 在 E:\projects\my-train 运行 python train.py
 ```
 
-## 7. Telegram 常用操作
+## Telegram 使用方法
 
-启动后，Telegram 里会有按钮菜单。
-
-你可以直接点：
+启动后可以直接点按钮：
 
 ```text
 状态 / 截图 / 系统
@@ -238,7 +283,7 @@ E:\projects\my-train
 工作目录 / 监控GPU / 监控CPU
 ```
 
-也可以直接发短句：
+也可以直接发送短句：
 
 ```text
 运行 python train.py
@@ -253,69 +298,50 @@ E:\projects\my-train
 最后一次
 ```
 
-## 8. 常见场景示例
+常用示例：
 
-### 场景 1：运行训练脚本
+### 运行训练脚本
 
 ```text
 工作目录 E:\projects\my-train
 运行 python train.py
 ```
 
-完成后会收到 Telegram 提醒。
-
-### 场景 2：等 GPU 空闲
+### 等 GPU 空闲
 
 ```text
 监控GPU
 ```
 
-默认规则来自 `.env`：
-
-```env
-GPU_THRESHOLD=10.0
-GPU_IDLE_DURATION=30
-```
-
-意思是：GPU 使用率低于 10%，持续 30 秒，就提醒你。
-
-### 场景 3：等文件下载完成
+### 等文件下载完成
 
 ```text
 监控文件 output.zip
 ```
 
-如果你设置过工作目录，相对路径 `output.zip` 会按工作目录查找。
-
-### 场景 4：等日志出现关键词
+### 等日志出现关键词
 
 ```text
 监控日志 train.log Done
 ```
 
-当 `train.log` 里出现 `Done`，NotifyMe 会提醒你。
-
-### 场景 5：等本地服务启动
+### 等服务端口打开
 
 ```text
 监控端口 127.0.0.1 8000
 ```
 
-端口打开后提醒你。
-
-### 场景 6：等接口健康检查通过
+### 等接口健康检查通过
 
 ```text
 监控网页 http://127.0.0.1:8000/health ok
 ```
 
-当网页内容包含 `ok` 时提醒你。
+## 本地命令行用法
 
-## 9. 本地命令行用法
+Telegram 适合远程控制，本地 CLI 更适合输入长命令。
 
-Telegram 适合远程控制，本地 CLI 适合输入长命令。
-
-设置工作目录：
+设置默认工作目录：
 
 ```powershell
 python -m notifyme.cli cwd E:\projects\my-train
@@ -345,15 +371,21 @@ python -m notifyme.cli file output.zip --mode stable --name Download
 python -m notifyme.cli port 127.0.0.1 8000 --mode open --name API
 ```
 
+监控 HTTP：
+
+```powershell
+python -m notifyme.cli http http://127.0.0.1:8000/health --contains ok --name Health
+```
+
 查看历史：
 
 ```powershell
 python -m notifyme.cli history -n 10
 ```
 
-## 10. 高级 Telegram 命令
+## 高级 Telegram 命令
 
-如果你想更精确控制，也可以使用 slash 命令：
+如果需要更精确控制，可以使用 slash 命令：
 
 ```text
 /help
@@ -380,9 +412,9 @@ python -m notifyme.cli history -n 10
 /watch gpu --name GPUIdle threshold=10 duration=30
 ```
 
-## 11. 运行数据保存在哪里
+## 运行数据和隐私保护
 
-NotifyMe 会生成一些本地运行文件：
+NotifyMe 会在本地生成运行数据：
 
 ```text
 .env
@@ -392,21 +424,9 @@ notifyme.db
 task_monitor_offset.txt
 ```
 
-这些都是本地私人文件，不应该上传 GitHub。
+这些文件都属于个人数据，不应该上传到 GitHub。
 
-它们已经被 `.gitignore` 忽略。
-
-说明：
-
-- `.env`：你的 Telegram token 和 chat id
-- `task_monitor.log`：运行日志
-- `errors.json`：错误记录
-- `notifyme.db`：任务历史和默认工作目录
-- `task_monitor_offset.txt`：Telegram 消息偏移量
-
-## 12. 上传 GitHub 前请检查
-
-上传到 GitHub 前，确认不要包含：
+项目已经通过 `.gitignore` 忽略它们：
 
 ```text
 .env
@@ -417,17 +437,23 @@ task_monitor_offset.txt
 __pycache__/
 ```
 
-可以用下面命令检查是否还有 token：
+上传 GitHub 前建议检查：
 
 ```powershell
-rg "bot[0-9]+:|TELEGRAM_TOKEN=.+|AAG|api.telegram.org"
+git status --short --ignored
 ```
 
-如果真实 token 曾经出现在日志或 Git 历史里，建议去 BotFather 重新生成 token。
+也可以扫描是否残留 token：
 
-## 13. 常见问题
+```powershell
+rg "bot[0-9]+:|TELEGRAM_TOKEN=.+|api.telegram.org/bot[0-9]"
+```
 
-### 1. 运行 `python train.py` 提示找不到文件
+如果真实 Token 曾经出现在日志或 Git 历史中，建议去 BotFather 重新生成 Token。
+
+## 常见问题
+
+### 运行 `python train.py` 提示找不到文件
 
 先设置工作目录：
 
@@ -441,53 +467,53 @@ rg "bot[0-9]+:|TELEGRAM_TOKEN=.+|AAG|api.telegram.org"
 运行 python train.py
 ```
 
-### 2. Telegram 没收到消息
+### Telegram 没收到消息
 
-检查：
+请检查：
 
 - `.env` 是否存在
 - `TELEGRAM_TOKEN` 是否正确
 - `TELEGRAM_CHAT_ID` 是否正确
-- 是否先给 bot 发过消息
+- 是否先给 Bot 发过消息
 - 网络是否能访问 Telegram
 
-### 3. `getUpdates` 页面是空的
+### getUpdates 页面没有内容
 
-先打开你的 bot，发送：
+先给你的 Bot 发一条消息：
 
 ```text
 hello
 ```
 
-然后再刷新：
+再刷新：
 
 ```text
-https://api.telegram.org/bot<你的BOT_TOKEN>/getUpdates
+https://api.telegram.org/bot<BOT_TOKEN>/getUpdates
 ```
 
-### 4. 截图失败
+### 截图失败
 
-可能原因：
+常见原因：
 
-- 电脑没有桌面环境
+- 当前环境没有桌面
 - 远程服务器没有图形界面
 - Linux 缺少截图工具
 
-截图失败不影响文字提醒。
+截图失败不会影响文字提醒。
 
-### 5. GPU 监控不可用
+### GPU 监控不可用
 
-GPU 监控依赖 NVIDIA 和 `pynvml`。
+GPU 监控依赖 NVIDIA 环境和 `pynvml`。
 
-如果没有 NVIDIA GPU，或者驱动环境不支持，GPU 监控会不可用，但其他功能仍然可以使用。
+如果没有 NVIDIA GPU，或者驱动环境不支持，GPU 监控会不可用，但其他功能仍然可以正常使用。
 
-## 14. 安全提醒
+## 安全提醒
 
-请务必注意：
+请务必记住：
 
-- 不要把 `.env` 上传 GitHub。
-- 不要把 Telegram token 发给别人。
-- 如果 token 泄露，立刻去 BotFather 重置。
-- 日志、数据库、错误记录都属于个人运行数据，不要上传。
+- 不要上传 `.env`
+- 不要上传日志、数据库、错误记录
+- 不要把 Telegram Bot Token 发给别人
+- 如果 Token 泄露，立刻去 BotFather 重置
 
-本仓库只应该上传代码、README、`.env.example` 和依赖文件。
+仓库里应该只保留代码、依赖文件、`.env.example` 和 README。
